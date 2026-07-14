@@ -1,0 +1,44 @@
+---
+# ArgoCD Application — AI Task Platform
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ai-task-platform
+  namespace: argocd
+  labels:
+    app: ai-task-platform
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+
+  # ── Source: Infrastructure repository ─────────────────────────────────
+  source:
+    repoURL: https://github.com/YOUR_ORG/ai-task-platform-infra
+    targetRevision: HEAD
+    path: k8s/base
+
+  # ── Destination ────────────────────────────────────────────────────────
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ai-task-platform
+
+  # ── Sync Policy ────────────────────────────────────────────────────────
+  syncPolicy:
+    automated:
+      prune: true        # Remove resources not in Git
+      selfHeal: true     # Revert manual changes
+      allowEmpty: false  # Prevent accidental deletion of all resources
+    syncOptions:
+      - CreateNamespace=true
+      - ApplyOutOfSyncOnly=true
+      - PrunePropagationPolicy=foreground
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+
+  # ── Health check ───────────────────────────────────────────────────────
+  revisionHistoryLimit: 10

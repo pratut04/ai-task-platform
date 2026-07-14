@@ -1,0 +1,47 @@
+# Node.js
+node_modules/
+dist/
+build/
+*.log
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Logs
+logs/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.venv/
+venv/
+*.egg
+
+# Docker
+.dockerignore
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Kubernetes secrets (never commit)
+k8s/base/secret.yaml
+
+# ArgoCD credentials
+argocd/*.secret.yaml
