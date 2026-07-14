@@ -209,7 +209,7 @@ jobs:
       - name: Checkout infrastructure repo
         uses: actions/checkout@v4
         with:
-          repository: YOUR_ORG/ai-task-platform-infra
+          repository: pratut04/ai-task-platform-infra
           token: ${{ secrets.INFRA_REPO_TOKEN }}
           path: infra
 
