@@ -20,9 +20,8 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copy built frontend
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Non-root user
-RUN addgroup -g 101 -S nginx-group && \
-    chown -R nginx:nginx /usr/share/nginx/html && \
+# Non-root user — nginx:nginx (uid/gid 101) already exists in nginx:alpine
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
     touch /var/run/nginx.pid && \
