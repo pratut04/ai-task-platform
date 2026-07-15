@@ -75,8 +75,6 @@ UserSchema.set('toJSON', {
   },
 });
 
-// Index for faster queries
-UserSchema.index({ email: 1 });
 
 const User = mongoose.model<IUser>('User', UserSchema);
 export default User;
