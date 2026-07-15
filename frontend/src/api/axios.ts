@@ -36,7 +36,9 @@ api.interceptors.response.use(
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
     // Handle 401 and attempt token refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Skip refresh logic for auth endpoints (login, register, refresh) to avoid redirect loops
+    const isAuthEndpoint = originalRequest.url?.includes('/auth/');
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
 
       const { refreshToken, setAccessToken, clearAuth } = useAuthStore.getState();
