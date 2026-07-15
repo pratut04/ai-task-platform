@@ -2,7 +2,11 @@ import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosE
 import { useAuthStore } from '@/store/auth.store';
 import toast from 'react-hot-toast';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+// VITE_API_URL = backend root URL e.g. "https://ai-task-platform-vspd.onrender.com"
+// Falls back to relative "/api" for same-origin or local dev proxying
+const API_BASE_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api`
+  : '/api';
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
