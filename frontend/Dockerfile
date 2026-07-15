@@ -1,7 +1,7 @@
 # ── Stage 1: Build ────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package*.json tsconfig.json vite.config.ts tailwind.config.js postcss.config.js ./
+COPY package*.json tsconfig.json tsconfig.node.json vite.config.ts tailwind.config.js postcss.config.js ./
 RUN npm ci
 COPY src ./src
 COPY public ./public
