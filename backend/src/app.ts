@@ -29,17 +29,20 @@ const createApp = (): Application => {
 
   // ── CORS ────────────────────────────────────────────────────────────────
   // CLIENT_URL can be a comma-separated list: "https://app.vercel.app,http://localhost:5173"
+  // Trailing slashes are stripped to prevent mismatch (browsers omit them in the Origin header)
   const allowedOrigins: string[] = (config.clientUrl || 'http://localhost:5173')
     .split(',')
-    .map((o) => o.trim())
+    .map((o) => o.trim().replace(/\/+$/, ''))  // strip trailing slashes
     .filter(Boolean);
 
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, curl, Postman)
+        // Allow requests with no origin (mobile apps, curl, Postman, health checks)
         if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) {
+        // Normalize incoming origin — strip trailing slash before compare
+        const normalizedOrigin = origin.replace(/\/+$/, '');
+        if (allowedOrigins.includes(normalizedOrigin)) {
           return callback(null, true);
         }
         callback(new Error(`CORS: origin ${origin} not allowed`));
