@@ -194,14 +194,29 @@ jobs:
 
   # ────────────────────────────────────────────────────────────────────────
   # Job 5: Update Infrastructure Repo (trigger ArgoCD sync)
+  # Requires: INFRA_REPO_TOKEN secret (PAT with repo scope on the infra repo)
+  # Setup: Settings → Secrets → Actions → New secret → INFRA_REPO_TOKEN
+  # Note: Job is skipped gracefully if INFRA_REPO_TOKEN is not configured.
   # ────────────────────────────────────────────────────────────────────────
   update-infra:
     name: Update Infrastructure Repo
     runs-on: ubuntu-latest
     needs: build-and-push
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    continue-on-error: true
 
     steps:
+      - name: Check INFRA_REPO_TOKEN is configured
+        env:
+          HAS_TOKEN: ${{ secrets.INFRA_REPO_TOKEN != '' }}
+        run: |
+          if [ "$HAS_TOKEN" != "true" ]; then
+            echo "⚠️  INFRA_REPO_TOKEN secret is not configured."
+            echo "   Skipping infrastructure repo update."
+            echo "   To enable: Settings → Secrets → Actions → New secret → INFRA_REPO_TOKEN"
+            exit 0
+          fi
+
       - name: Extract short SHA
         id: sha
         run: echo "short=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -216,13 +231,13 @@ jobs:
       - name: Update image tags in k8s manifests
         run: |
           SHORT_SHA=${{ steps.sha.outputs.short }}
-          
+
           # Update backend image tag
           sed -i "s|ai-task-backend:.*|ai-task-backend:${SHORT_SHA}|g" infra/k8s/base/backend.yaml
-          
+
           # Update frontend image tag
           sed -i "s|ai-task-frontend:.*|ai-task-frontend:${SHORT_SHA}|g" infra/k8s/base/services.yaml
-          
+
           # Update worker image tag
           sed -i "s|ai-task-worker:.*|ai-task-worker:${SHORT_SHA}|g" infra/k8s/base/worker.yaml
 
