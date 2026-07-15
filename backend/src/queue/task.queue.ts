@@ -20,6 +20,7 @@ const QUEUE_KEY = 'task-processing:jobs';
 class TaskQueueService {
   private client: Redis;
   private _connected = false;
+  private _hasWarnedRedis = false; // prevent log-spam: warn only once per disconnect
 
   constructor() {
     this.client = new Redis(config.redisUrl, {
@@ -40,6 +41,7 @@ class TaskQueueService {
   private _setupEvents(): void {
     this.client.on('connect', () => {
       this._connected = true;
+      this._hasWarnedRedis = false; // reset so future disconnects log the warning again
       logger.info('✅ Redis connected — task queue is active.');
     });
 
@@ -50,8 +52,9 @@ class TaskQueueService {
     this.client.on('error', (err: NodeJS.ErrnoException) => {
       if (this._connected || err.code !== 'ECONNREFUSED') {
         logger.error('Redis error:', { message: err.message, code: err.code });
-      } else {
-        // First-time connection failure — log once, not repeatedly
+      } else if (!this._hasWarnedRedis) {
+        // Log once — not on every reconnect attempt
+        this._hasWarnedRedis = true;
         logger.warn(
           `⚠️  Redis not reachable at ${config.redisUrl}. ` +
           'Queue features disabled until Redis is available. ' +
@@ -65,8 +68,11 @@ class TaskQueueService {
       this._connected = false;
     });
 
-    this.client.on('reconnecting', () => {
-      logger.debug('Redis reconnecting...');
+    this.client.on('reconnecting', (delay: number) => {
+      // Only log on the first reconnect attempt to avoid flooding logs
+      if (delay <= 500) {
+        logger.debug('Redis reconnecting (will retry automatically)...');
+      }
     });
   }
 
