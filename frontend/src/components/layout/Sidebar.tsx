@@ -11,6 +11,7 @@ import {
   Cpu,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/api/auth.api';
@@ -27,9 +28,16 @@ const navItems = [
 interface SidebarProps {
   collapsed: boolean;
   onToggle: () => void;
+  mobileOpen: boolean;
+  onMobileClose: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  collapsed,
+  onToggle,
+  mobileOpen,
+  onMobileClose,
+}) => {
   const navigate = useNavigate();
   const { user, clearAuth } = useAuthStore();
 
@@ -43,82 +51,156 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
     }
   };
 
+  const handleNavClick = () => {
+    // Close mobile drawer when a nav item is clicked
+    onMobileClose();
+  };
+
   return (
-    <motion.aside
-      animate={{ width: collapsed ? 72 : 240 }}
-      transition={{ duration: 0.3, ease: 'easeInOut' }}
-      className="fixed left-0 top-0 h-full bg-surface-800/80 backdrop-blur-xl border-r border-white/10 flex flex-col z-30 overflow-hidden"
-    >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
-        <div className="w-9 h-9 shrink-0 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
-          <Cpu className="w-5 h-5 text-white" />
-        </div>
-        <AnimatePresence>
-          {!collapsed && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              <p className="font-bold text-white text-sm leading-tight">AI Task</p>
-              <p className="text-white/40 text-xs">Platform</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+    <>
+      {/* ── Desktop Sidebar (hidden on mobile) ─────────────────────────── */}
+      <motion.aside
+        animate={{ width: collapsed ? 72 : 240 }}
+        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="hidden md:flex fixed left-0 top-0 h-full bg-surface-800/80 backdrop-blur-xl border-r border-white/10 flex-col z-30 overflow-hidden"
+      >
+        <SidebarContent
+          collapsed={collapsed}
+          onToggle={onToggle}
+          user={user}
+          handleLogout={handleLogout}
+          handleNavClick={handleNavClick}
+        />
+      </motion.aside>
 
-      {/* Nav Items */}
-      <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
-        {navItems.map(({ to, icon: Icon, label }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) =>
-              `sidebar-item ${isActive ? 'active' : ''} ${collapsed ? 'justify-center px-0' : ''}`
-            }
+      {/* ── Mobile Sidebar (drawer, hidden on desktop) ─────────────────── */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.aside
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ duration: 0.28, ease: 'easeInOut' }}
+            className="md:hidden fixed left-0 top-0 h-full w-72 bg-surface-800/95 backdrop-blur-xl border-r border-white/10 flex flex-col z-50 overflow-hidden shadow-2xl"
           >
-            <Icon className="w-5 h-5 shrink-0" />
-            <AnimatePresence>
-              {!collapsed && (
-                <motion.span
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -10 }}
-                  transition={{ duration: 0.2 }}
-                  className="text-sm"
-                >
-                  {label}
-                </motion.span>
-              )}
-            </AnimatePresence>
-          </NavLink>
-        ))}
-      </nav>
+            {/* Mobile close button */}
+            <button
+              onClick={onMobileClose}
+              className="absolute top-4 right-4 p-2 rounded-xl hover:bg-white/10 text-white/60 hover:text-white transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
 
-      {/* User Section */}
-      <div className="border-t border-white/10 p-2 space-y-1">
-        <button
-          onClick={handleLogout}
-          className={`sidebar-item w-full ${collapsed ? 'justify-center px-0' : ''} hover:text-red-400 hover:bg-red-500/10`}
+            <SidebarContent
+              collapsed={false}
+              onToggle={onToggle}
+              user={user}
+              handleLogout={handleLogout}
+              handleNavClick={handleNavClick}
+              isMobile
+            />
+          </motion.aside>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
+// ── Shared inner content ──────────────────────────────────────────────────────
+interface SidebarContentProps {
+  collapsed: boolean;
+  onToggle: () => void;
+  user: { name: string; email: string } | null;
+  handleLogout: () => void;
+  handleNavClick: () => void;
+  isMobile?: boolean;
+}
+
+const SidebarContent: React.FC<SidebarContentProps> = ({
+  collapsed,
+  onToggle,
+  user,
+  handleLogout,
+  handleNavClick,
+  isMobile = false,
+}) => (
+  <>
+    {/* Logo */}
+    <div className="flex items-center gap-3 px-4 py-5 border-b border-white/10">
+      <div className="w-9 h-9 shrink-0 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
+        <Cpu className="w-5 h-5 text-white" />
+      </div>
+      <AnimatePresence>
+        {(!collapsed || isMobile) && (
+          <motion.div
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <p className="font-bold text-white text-sm leading-tight">AI Task</p>
+            <p className="text-white/40 text-xs">Platform</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+
+    {/* Nav Items */}
+    <nav className="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
+      {navItems.map(({ to, icon: Icon, label }) => (
+        <NavLink
+          key={to}
+          to={to}
+          onClick={handleNavClick}
+          className={({ isActive }) =>
+            `sidebar-item ${isActive ? 'active' : ''} ${
+              collapsed && !isMobile ? 'justify-center px-0' : ''
+            }`
+          }
         >
-          <LogOut className="w-5 h-5 shrink-0" />
+          <Icon className="w-5 h-5 shrink-0" />
           <AnimatePresence>
-            {!collapsed && (
+            {(!collapsed || isMobile) && (
               <motion.span
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
                 className="text-sm"
               >
-                Logout
+                {label}
               </motion.span>
             )}
           </AnimatePresence>
-        </button>
+        </NavLink>
+      ))}
+    </nav>
 
-        {/* Collapse Toggle */}
+    {/* User Section */}
+    <div className="border-t border-white/10 p-2 space-y-1">
+      <button
+        onClick={handleLogout}
+        className={`sidebar-item w-full ${
+          collapsed && !isMobile ? 'justify-center px-0' : ''
+        } hover:text-red-400 hover:bg-red-500/10`}
+      >
+        <LogOut className="w-5 h-5 shrink-0" />
+        <AnimatePresence>
+          {(!collapsed || isMobile) && (
+            <motion.span
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              className="text-sm"
+            >
+              Logout
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </button>
+
+      {/* Collapse Toggle — desktop only */}
+      {!isMobile && (
         <button
           onClick={onToggle}
           className={`sidebar-item w-full ${collapsed ? 'justify-center px-0' : ''}`}
@@ -141,26 +223,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onToggle }) => {
             )}
           </AnimatePresence>
         </button>
-      </div>
+      )}
+    </div>
 
-      {/* User avatar at bottom */}
-      {!collapsed && user && (
-        <div className="px-4 py-3 border-t border-white/10">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center shrink-0">
-              <span className="text-xs font-bold text-white">
-                {user.name.charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user.name}</p>
-              <p className="text-xs text-white/40 truncate">{user.email}</p>
-            </div>
+    {/* User avatar at bottom */}
+    {(!collapsed || isMobile) && user && (
+      <div className="px-4 py-3 border-t border-white/10">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-primary flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-white">
+              {user.name.charAt(0).toUpperCase()}
+            </span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white truncate">{user.name}</p>
+            <p className="text-xs text-white/40 truncate">{user.email}</p>
           </div>
         </div>
-      )}
-    </motion.aside>
-  );
-};
+      </div>
+    )}
+  </>
+);
 
 export default Sidebar;

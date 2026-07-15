@@ -62,7 +62,7 @@ const TasksPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <List className="w-5 h-5 text-primary-400" />
@@ -70,7 +70,7 @@ const TasksPage: React.FC = () => {
           </h2>
           <p className="text-white/40 text-sm mt-0.5">{meta?.total || 0} total tasks</p>
         </div>
-        <Button leftIcon={<PlusCircle className="w-4 h-4" />} onClick={() => navigate('/tasks/new')}>
+        <Button leftIcon={<PlusCircle className="w-4 h-4" />} onClick={() => navigate('/tasks/new')} className="self-start sm:self-auto">
           New Task
         </Button>
       </div>

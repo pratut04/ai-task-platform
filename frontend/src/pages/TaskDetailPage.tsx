@@ -113,7 +113,7 @@ const TaskDetailPage: React.FC = () => {
 
         <CardBody className="space-y-6">
           {/* Metadata Row */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <MetaItem
               icon={<Zap className="w-4 h-4 text-amber-400" />}
               label="Operation"
@@ -138,7 +138,7 @@ const TaskDetailPage: React.FC = () => {
             <MetaItem
               icon={<FileText className="w-4 h-4 text-emerald-400" />}
               label="Input Length"
-              value={`${task.inputText.length} chars`}
+              value={`${task.inputText.length} Chars`}
             />
           </div>
 
@@ -190,13 +190,14 @@ const TaskDetailPage: React.FC = () => {
       </Card>
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-3">
+      <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-3">
         <Button
           variant="danger"
           leftIcon={<Trash2 className="w-4 h-4" />}
           isLoading={deleteMutation.isPending}
           onClick={() => deleteMutation.mutate()}
           disabled={task.status === 'running'}
+          className="w-full sm:w-auto justify-center"
         >
           Delete
         </Button>
@@ -205,6 +206,7 @@ const TaskDetailPage: React.FC = () => {
           isLoading={runMutation.isPending}
           onClick={() => runMutation.mutate()}
           disabled={task.status === 'running'}
+          className="w-full sm:w-auto justify-center"
         >
           {task.status === 'running' ? 'Processing...' : 'Run Task'}
         </Button>

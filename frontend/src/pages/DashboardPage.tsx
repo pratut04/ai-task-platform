@@ -113,16 +113,17 @@ const DashboardPage: React.FC = () => {
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-2xl font-bold text-white">
+          <h2 className="text-xl sm:text-2xl font-bold text-white">
             Good day, <span className="text-gradient">{user?.name?.split(' ')[0] || 'User'}</span>!
           </h2>
-          <p className="text-white/40 mt-1">Here's an overview of your task processing activity</p>
+          <p className="text-white/40 mt-1 text-sm">Here's an overview of your task processing activity</p>
         </div>
         <Button
           leftIcon={<PlusCircle className="w-4 h-4" />}
           onClick={() => navigate('/tasks/new')}
+          className="self-start sm:self-auto"
         >
           New Task
         </Button>
