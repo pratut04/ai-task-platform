@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,7 +11,6 @@ import {
   Cpu,
   ChevronLeft,
   ChevronRight,
-  Settings,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import { authApi } from '@/api/auth.api';

@@ -37,8 +37,7 @@ export const Button: React.FC<ButtonProps> = ({
 }) => {
   // Cast to avoid framer-motion vs React HTML event handler type conflicts
   // (onDragStart, onAnimationStart etc. differ in signature between the two)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const motionProps = props as any;
+  const motionProps = props as any; // type: framer-motion/React event handler conflict workaround
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}

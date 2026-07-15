@@ -50,8 +50,8 @@ class TaskProcessor:
         try:
             fn = self.OPERATIONS[operation]
             result = fn(input_text)
-            elapsed_ns  = time.perf_counter_ns() - start_ns
-            elapsed_us  = round(elapsed_ns / 1_000, 3)   # microseconds, 3 dp
+            elapsed_ns = time.perf_counter_ns() - start_ns
+            elapsed_us = round(elapsed_ns / 1_000, 3)  # microseconds, 3 dp
 
             if elapsed_us >= 1_000:
                 display = f"{elapsed_us / 1_000:.3f} ms"
@@ -67,7 +67,6 @@ class TaskProcessor:
         except Exception as e:
             logs.append(f"[ERROR] Processing failed: {str(e)}")
             raise
-
 
     # ── Operations ─────────────────────────────────────────────────────────
 

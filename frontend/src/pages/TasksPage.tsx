@@ -11,11 +11,9 @@ import { Task, TaskFilters, TaskOperation, TaskStatus } from '@/types';
 import {
   PlusCircle,
   Search,
-  Filter,
   Trash2,
   Eye,
   Play,
-  Clock,
   List,
   Timer,
 } from 'lucide-react';

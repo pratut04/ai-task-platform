@@ -1,17 +1,18 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { Suspense, lazy } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth.store';
 import { Loader2 } from 'lucide-react';
 
-// Lazy-loaded pages
-const LoginPage = lazy(() => import('@/pages/LoginPage'));
-const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
-const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
-const TasksPage = lazy(() => import('@/pages/TasksPage'));
-const CreateTaskPage = lazy(() => import('@/pages/CreateTaskPage'));
-const TaskDetailPage = lazy(() => import('@/pages/TaskDetailPage'));
-const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
-const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
+// Lazy-loaded pages — re-exported for use in App.tsx
+export const LoginPage = lazy(() => import('@/pages/LoginPage'));
+export const RegisterPage = lazy(() => import('@/pages/RegisterPage'));
+export const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+export const TasksPage = lazy(() => import('@/pages/TasksPage'));
+export const CreateTaskPage = lazy(() => import('@/pages/CreateTaskPage'));
+export const TaskDetailPage = lazy(() => import('@/pages/TaskDetailPage'));
+export const ProfilePage = lazy(() => import('@/pages/ProfilePage'));
+export const NotFoundPage = lazy(() => import('@/pages/NotFoundPage'));
 
 // Loading fallback
 const PageLoader: React.FC = () => (
@@ -47,5 +48,3 @@ export const withSuspense = (Component: React.LazyExoticComponent<React.FC>) => 
     <Component />
   </Suspense>
 );
-
-export { LoginPage, RegisterPage, DashboardPage, TasksPage, CreateTaskPage, TaskDetailPage, ProfilePage, NotFoundPage };

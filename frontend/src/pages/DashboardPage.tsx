@@ -16,7 +16,6 @@ import { tasksApi } from '@/api/tasks.api';
 import { useAuthStore } from '@/store/auth.store';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { StatCardSkeleton, TaskCardSkeleton } from '@/components/ui/Skeleton';
-import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { Link, useNavigate } from 'react-router-dom';
 import { Task, TaskStats } from '@/types';

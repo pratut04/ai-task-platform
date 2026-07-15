@@ -35,16 +35,16 @@ from processor.task_processor import processor
 
 log = setup_logger("task_queue.consumer")
 
-REDIS_URL     = os.getenv("REDIS_URL", "redis://localhost:6379")
-MONGO_URI     = os.getenv("MONGO_URI", "")
-QUEUE_KEY     = "task-processing:jobs"   # Must match backend LPUSH key exactly
-BRPOP_TIMEOUT = 5                        # seconds; 0 = block forever
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379")
+MONGO_URI = os.getenv("MONGO_URI", "")
+QUEUE_KEY = "task-processing:jobs"  # Must match backend LPUSH key exactly
+BRPOP_TIMEOUT = 5  # seconds; 0 = block forever
 
 # ── Status constants ─────────────────────────────────────────────────────────
 STATUS_PENDING = "pending"
 STATUS_RUNNING = "running"
 STATUS_SUCCESS = "success"
-STATUS_FAILED  = "failed"
+STATUS_FAILED = "failed"
 
 
 class WorkerConsumer:
@@ -62,7 +62,7 @@ class WorkerConsumer:
         self.tasks_col: Collection = self.mongo_client[db_name]["tasks"]
 
         signal.signal(signal.SIGTERM, self._handle_signal)
-        signal.signal(signal.SIGINT,  self._handle_signal)
+        signal.signal(signal.SIGINT, self._handle_signal)
 
         log.info("Worker consumer initialised", extra={"redis": REDIS_URL, "queue": QUEUE_KEY})
 
@@ -145,8 +145,8 @@ class WorkerConsumer:
             log.error(f"Invalid JSON payload — skipping: {e}  raw={raw_payload!r}")
             return
 
-        task_id    = job_data.get("taskId", "unknown")
-        operation  = job_data.get("operation", "")
+        task_id = job_data.get("taskId", "unknown")
+        operation = job_data.get("operation", "")
         input_text = job_data.get("inputText", "")
 
         extra = {"task_id": task_id, "operation": operation}
