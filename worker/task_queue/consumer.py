@@ -30,8 +30,8 @@ from pymongo.collection import Collection
 
 load_dotenv()
 
-from logger.logger import setup_logger
-from processor.task_processor import processor
+from logger.logger import setup_logger  # noqa: E402
+from processor.task_processor import processor  # noqa: E402
 
 log = setup_logger("task_queue.consumer")
 

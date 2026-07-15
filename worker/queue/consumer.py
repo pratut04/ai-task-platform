@@ -30,8 +30,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Local imports — PYTHONPATH=/app must be set (see Dockerfile / main.py)
-from logger.logger import setup_logger
-from processor.task_processor import processor
+from logger.logger import setup_logger  # noqa: E402
+from processor.task_processor import processor  # noqa: E402
 
 log = setup_logger("queue.consumer")
 

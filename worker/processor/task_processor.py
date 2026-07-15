@@ -60,7 +60,7 @@ class TaskProcessor:
 
             logs.append(f"[INFO] Operation completed in {display}")
             logs.append(f"[INFO] Result length: {len(str(result))} characters")
-            logs.append(f"[SUCCESS] Task processed successfully")
+            logs.append("[SUCCESS] Task processed successfully")
 
             return result, elapsed_us, logs
 
