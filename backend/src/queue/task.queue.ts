@@ -23,12 +23,18 @@ class TaskQueueService {
   private _hasWarnedRedis = false; // prevent log-spam: warn only once per disconnect
 
   constructor() {
+    // Upstash and other TLS Redis providers require explicit tls option
+    // even when URL starts with rediss:// — ioredis needs it in some environments
+    const isTLS = config.redisUrl.startsWith('rediss://');
+
     this.client = new Redis(config.redisUrl, {
       // Retry strategy: attempt reconnect with exponential back-off (max 30s)
       retryStrategy: (times: number) => {
         const delay = Math.min(times * 500, 30_000);
         return delay;
       },
+      // TLS for Upstash / Redis Cloud
+      tls: isTLS ? { rejectUnauthorized: false } : undefined,
       // Do not crash the process on connection failure
       enableOfflineQueue: true,
       lazyConnect: false,
@@ -81,9 +87,17 @@ class TaskQueueService {
    * Returns true if enqueued successfully, false if Redis is unavailable.
    */
   async enqueue(data: TaskJobData): Promise<boolean> {
+    // If not yet connected, wait up to 3s for connection (handles startup race condition)
     if (!this._connected) {
-      logger.warn(`Redis unavailable — cannot enqueue task: ${data.taskId}. Start Redis to enable background jobs.`);
-      return false;
+      const connected = await new Promise<boolean>((resolve) => {
+        if (this._connected) return resolve(true);
+        const timeout = setTimeout(() => resolve(false), 3000);
+        this.client.once('ready', () => { clearTimeout(timeout); resolve(true); });
+      });
+      if (!connected) {
+        logger.warn(`Redis unavailable — cannot enqueue task: ${data.taskId}. Check REDIS_URL env var.`);
+        return false;
+      }
     }
 
     try {

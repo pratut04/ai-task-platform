@@ -29,10 +29,11 @@ const TaskDetailPage: React.FC = () => {
     queryKey: ['task', id],
     queryFn: () => tasksApi.getById(id!),
     enabled: !!id,
-    // Auto-refresh if task is pending or running
+    retry: 1,  // Don't hammer server on failures (e.g., 401)
+    // Auto-refresh while task is actively running
     refetchInterval: (query) => {
       const status = query.state.data?.status;
-      return status === 'pending' || status === 'running' ? 2000 : false;
+      return status === 'running' || status === 'pending' ? 3000 : false;
     },
   });
 
@@ -43,6 +44,11 @@ const TaskDetailPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       queryClient.invalidateQueries({ queryKey: ['task-stats'] });
       toast.success('Task queued for processing!');
+    },
+    onError: (error: Error) => {
+      queryClient.invalidateQueries({ queryKey: ['task', id] });
+      const msg = (error as { response?: { data?: { message?: string } } }).response?.data?.message || error.message;
+      toast.error(`Failed to run task: ${msg}`);
     },
   });
 

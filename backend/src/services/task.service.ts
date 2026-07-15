@@ -48,8 +48,8 @@ export class TaskService {
       throw new Error('TASK_ALREADY_RUNNING');
     }
 
-    // Update status to pending before queuing
-    const updatedTask = await taskRepository.updateStatus(id, TaskStatus.PENDING);
+    // Update status to running immediately so UI shows "Processing..."
+    const updatedTask = await taskRepository.updateStatus(id, TaskStatus.RUNNING);
     if (!updatedTask) {
       throw new Error('TASK_UPDATE_FAILED');
     }
@@ -62,6 +62,8 @@ export class TaskService {
     });
 
     if (!enqueued) {
+      // Rollback: set status back to failed so user knows something went wrong
+      await taskRepository.updateStatus(id, TaskStatus.FAILED);
       throw new Error('QUEUE_UNAVAILABLE');
     }
 
