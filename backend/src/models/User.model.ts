@@ -67,8 +67,10 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string):
 
 // Remove sensitive fields from JSON output
 UserSchema.set('toJSON', {
-  transform: (_doc, ret) => {
-    delete ret.password;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  transform: (_doc: any, ret: any) => {
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+    delete ret['password'];
     return ret;
   },
 });

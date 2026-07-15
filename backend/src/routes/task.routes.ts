@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, RequestHandler } from 'express';
 import taskController from '../controllers/task.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validation.middleware';
@@ -21,7 +21,7 @@ router.post(
   '/',
   createTaskValidator,
   validate,
-  (req, res, next) => taskController.create(req, res, next)
+  taskController.create.bind(taskController) as RequestHandler
 );
 
 /**
@@ -32,7 +32,7 @@ router.get(
   '/',
   getTasksValidator,
   validate,
-  (req, res, next) => taskController.getAll(req, res, next)
+  taskController.getAll.bind(taskController) as RequestHandler
 );
 
 /**
@@ -41,7 +41,7 @@ router.get(
  */
 router.get(
   '/stats',
-  (req, res, next) => taskController.getStats(req, res, next)
+  taskController.getStats.bind(taskController) as RequestHandler
 );
 
 /**
@@ -52,7 +52,7 @@ router.get(
   '/:id',
   taskIdValidator,
   validate,
-  (req, res, next) => taskController.getById(req, res, next)
+  taskController.getById.bind(taskController) as RequestHandler
 );
 
 /**
@@ -63,7 +63,7 @@ router.post(
   '/:id/run',
   taskIdValidator,
   validate,
-  (req, res, next) => taskController.runTask(req, res, next)
+  taskController.runTask.bind(taskController) as RequestHandler
 );
 
 /**
@@ -74,7 +74,7 @@ router.delete(
   '/:id',
   taskIdValidator,
   validate,
-  (req, res, next) => taskController.delete(req, res, next)
+  taskController.delete.bind(taskController) as RequestHandler
 );
 
 export default router;

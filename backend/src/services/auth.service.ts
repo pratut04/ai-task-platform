@@ -33,7 +33,7 @@ export class AuthService {
       role: user.role,
     };
     return jwt.sign(payload, config.jwtSecret, {
-      expiresIn: config.jwtExpiresIn as string,
+      expiresIn: config.jwtExpiresIn as jwt.SignOptions['expiresIn'],
     });
   }
 
@@ -44,7 +44,7 @@ export class AuthService {
       role: user.role,
     };
     return jwt.sign(payload, config.jwtRefreshSecret, {
-      expiresIn: config.jwtRefreshExpiresIn as string,
+      expiresIn: config.jwtRefreshExpiresIn as jwt.SignOptions['expiresIn'],
     });
   }
 

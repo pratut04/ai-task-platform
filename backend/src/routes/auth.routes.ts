@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, RequestHandler } from 'express';
 import authController from '../controllers/auth.controller';
 import { authenticate } from '../middlewares/auth.middleware';
 import { validate } from '../middlewares/validation.middleware';
@@ -18,7 +18,7 @@ router.post(
   '/register',
   registerValidator,
   validate,
-  (req, res, next) => authController.register(req, res, next)
+  authController.register.bind(authController) as RequestHandler
 );
 
 /**
@@ -29,7 +29,7 @@ router.post(
   '/login',
   loginValidator,
   validate,
-  (req, res, next) => authController.login(req, res, next)
+  authController.login.bind(authController) as RequestHandler
 );
 
 /**
@@ -40,7 +40,7 @@ router.post(
   '/refresh',
   refreshTokenValidator,
   validate,
-  (req, res, next) => authController.refresh(req, res, next)
+  authController.refresh.bind(authController) as RequestHandler
 );
 
 /**
@@ -50,7 +50,7 @@ router.post(
 router.get(
   '/profile',
   authenticate,
-  (req, res, next) => authController.getProfile(req, res, next)
+  authController.getProfile.bind(authController) as RequestHandler
 );
 
 /**
@@ -60,7 +60,7 @@ router.get(
 router.post(
   '/logout',
   authenticate,
-  (req, res) => authController.logout(req, res)
+  authController.logout.bind(authController) as RequestHandler
 );
 
 export default router;

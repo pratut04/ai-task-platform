@@ -35,12 +35,16 @@ export const Button: React.FC<ButtonProps> = ({
   className = '',
   ...props
 }) => {
+  // Cast to avoid framer-motion vs React HTML event handler type conflicts
+  // (onDragStart, onAnimationStart etc. differ in signature between the two)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const motionProps = props as any;
   return (
     <motion.button
       whileTap={{ scale: 0.97 }}
       className={`${variantClasses[variant]} ${sizeClasses[size]} inline-flex items-center justify-center gap-2 ${className}`}
       disabled={disabled || isLoading}
-      {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+      {...motionProps}
     >
       {isLoading ? (
         <Loader2 className="w-4 h-4 animate-spin" />

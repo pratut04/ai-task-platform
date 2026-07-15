@@ -63,7 +63,7 @@
 ### 1. Clone & Configure
 
 ```bash
-git clone https://github.com/YOUR_ORG/ai-task-platform.git
+git clone https://github.com/pratut04/ai-task-platform.git
 cd ai-task-platform
 ```
 
@@ -72,7 +72,7 @@ cd ai-task-platform
 ```bash
 cd backend
 cp .env.example .env
-# Edit .env with your MONGO_URI and JWT secrets
+# Edit .env — fill in your MONGO_URI and strong JWT secrets
 npm install
 npm run dev
 ```
@@ -94,7 +94,7 @@ python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
-# Edit .env with your MONGO_URI and REDIS_URL
+# Edit .env — fill in your MONGO_URI (and REDIS_URL if not localhost)
 python main.py
 ```
 
