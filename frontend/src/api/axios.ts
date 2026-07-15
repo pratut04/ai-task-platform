@@ -50,12 +50,16 @@ api.interceptors.response.use(
           return api(originalRequest);
         } catch {
           clearAuth();
-          window.location.href = '/login';
           toast.error('Session expired. Please login again.');
+          // Use history API so React Router handles navigation (avoids Vercel 404)
+          window.history.pushState({}, '', '/login');
+          window.dispatchEvent(new PopStateEvent('popstate'));
         }
       } else {
         clearAuth();
-        window.location.href = '/login';
+        // Use history API so React Router handles navigation (avoids Vercel 404)
+        window.history.pushState({}, '', '/login');
+        window.dispatchEvent(new PopStateEvent('popstate'));
       }
     }
 
