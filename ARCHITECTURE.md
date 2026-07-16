@@ -2,27 +2,45 @@
 
 ## System Overview
 
-The AI Task Processing Platform is a distributed, microservices-based system designed for enterprise-grade task processing at scale. It follows clean architecture principles with clear separation of concerns across three independently deployable services.
+The AI Task Processing Platform is a distributed, microservices-based system designed for enterprise-grade task processing at scale. It follows clean architecture principles with clear separation of concerns across three independently deployable services backed by MongoDB and Redis.
 
 ---
 
 ## High-Level Architecture
 
-       ```
+```
                      Users
-                     │
-                     ▼
-              Frontend (Vercel)
-                     │
-                     ▼
-              Backend API (Render)
-              │              │
-              │              │
-              ▼              ▼
-       MongoDB Atlas     Upstash Redis
-                            │
-                            ▼
-                     Worker (Railway)
+                      │
+                      ▼
+               Frontend (React + Vite)
+               [Deployed: Vercel]
+                      │  HTTP/REST
+                      ▼
+               Backend API (Node.js + Express)
+               │                    │
+               ▼                    ▼
+         MongoDB Atlas         Redis (Bull Queue)
+                                    │
+                                    ▼
+                         Python Worker (consumer)
+```
+
+---
+
+## Repository Layout
+
+```
+ai-task-platform/
+├── backend/            # Node.js + Express + TypeScript API
+├── frontend/           # React + Vite + TypeScript SPA
+├── worker/             # Python task worker
+├── k8s/                # Kubernetes manifests (Kustomize)
+│   ├── base/           # Base manifests
+│   └── overlays/       # dev / prod environment patches
+├── argocd/             # ArgoCD Application manifest
+├── .github/workflows/  # GitHub Actions CI/CD pipeline
+├── docker-compose.yml  # Local development stack (5 services)
+└── redis-win/          # Redis binaries for Windows local dev
 ```
 
 ---
@@ -53,20 +71,8 @@ HTTP Request
        ▼
 ┌─────────────┐
 │    Model    │  Mongoose schema + hooks
-└─────────────┘
+└──────┬──────┘
 ```
-
-### Key Design Decisions
-
-| Decision | Rationale |
-|----------|-----------|
-| **Repository Pattern** | Isolates data access; easy to swap DB |
-| **Service Layer** | All business logic in one place; testable |
-| **DTO Validation** | express-validator enforces input at edge |
-| **Error Code System** | Service throws string codes; middleware maps to HTTP |
-| **Bull Queue** | Production-grade Redis queue with retries |
-| **JWT Refresh Tokens** | Stateless auth with rotation |
-| **Winston + Daily Rotate** | Structured logs with automatic rotation |
 
 ### Folder Structure
 
@@ -74,7 +80,7 @@ HTTP Request
 backend/src/
 ├── config/         # DB connection, env config
 ├── controllers/    # HTTP handlers (thin layer)
-├── dto/            # Data Transfer Objects (future expansion)
+├── dto/            # Data Transfer Objects
 ├── middlewares/    # Auth, validation, error handler
 ├── models/         # Mongoose models
 ├── queue/          # Bull queue service
@@ -101,6 +107,12 @@ backend/src/
 | **Form state** | React Hook Form | Performance, validation |
 | **UI state** | Local component state | Simplest approach |
 
+### Styling & Build
+
+- **Tailwind CSS** for utility-first styling (`tailwind.config.js`, `postcss.config.js`)
+- Production build served via **Nginx** (`nginx.conf`)
+- Deployed to **Vercel** (`vercel.json`)
+
 ### Live Updates Strategy
 
 Tasks with `pending` or `running` status trigger automatic polling via React Query's `refetchInterval`:
@@ -112,15 +124,13 @@ refetchInterval: (query) => {
 }
 ```
 
-- Dashboard stats: polls every 5 seconds
-- Task detail: polls every 2 seconds when active
-
 ### Folder Structure
 
 ```
 frontend/src/
 ├── api/            # Axios instance + typed API modules
 ├── components/
+│   ├── auth/       # Login, Register form components
 │   ├── layout/     # Sidebar, Navbar
 │   ├── tasks/      # Task-specific components
 │   └── ui/         # Reusable: Button, Card, Modal, Badge...
@@ -129,7 +139,7 @@ frontend/src/
 ├── pages/          # Route-level page components
 ├── router/         # Route guards, lazy loading
 ├── store/          # Zustand stores
-├── styles/         # globals.css, Tailwind config
+├── styles/         # Global CSS
 ├── types/          # Shared TypeScript types
 └── utils/          # Utility functions
 ```
@@ -138,14 +148,31 @@ frontend/src/
 
 ## Python Worker Architecture
 
+### Module Structure
+
+```
+worker/
+├── main.py             # Entry point — starts WorkerConsumer loop
+├── config/             # Settings (env vars, MongoDB/Redis config)
+├── logger/             # Structured logging setup
+│   └── logger.py
+├── processor/          # Task processing logic
+│   └── task_processor.py
+├── task_queue/         # Redis queue consumer (Bull-compatible BRPOP)
+│   └── consumer.py
+├── queue/              # Bull queue helpers / job schema
+├── requirements.txt
+└── Dockerfile
+```
+
 ### Processing Flow
 
 ```
 Redis Queue (Bull)
        │
        ▼
-WorkerConsumer.run()
-  └─ _fetch_next_job()   ← BRPOP from Redis list
+WorkerConsumer.run()   ← main.py entry point
+  └─ _fetch_next_job() ← BRPOP from Redis list
        │
        ▼
   _process_job(job_data)
@@ -156,77 +183,79 @@ WorkerConsumer.run()
                        result, logs, executionTime
 ```
 
-### Error Handling
-
-- Invalid operation → `ValueError` → status = failed
-- Unexpected exception → caught at top level → status = failed
-- Redis connection error → logged, retry on next loop iteration
-- Graceful shutdown on SIGTERM/SIGINT
-
 ---
 
 ## Infrastructure Architecture
 
-### Docker Compose (Development)
+### Docker Compose (Local Development)
 
 ```
 docker-compose.yml
-├── redis        — Redis 7.2 with persistence
-├── backend      — Node.js API server
-├── frontend     — Nginx serving React build
-└── worker       — Python worker (2 replicas)
+├── mongodb   — MongoDB 7.0 with persistence (port 27017)
+├── redis     — Redis 7.2-alpine with AOF persistence (port 6379)
+├── backend   — Node.js API server (port 5000)
+├── frontend  — Nginx serving React build (port 5173→80)
+└── worker    — Python worker (WORKER_CONCURRENCY=4)
 ```
 
-### Kubernetes (Production)
+### Kubernetes (Production — Kustomize)
 
 ```
-Namespace: ai-task-platform
-├── Deployments
-│   ├── backend    (2 replicas, rolling update)
-│   ├── frontend   (2 replicas, rolling update)
-│   ├── redis      (1 replica, PVC)
-│   └── worker     (2-10 replicas, HPA)
-├── Services
-│   ├── backend-service   (ClusterIP)
-│   ├── frontend-service  (ClusterIP)
-│   └── redis-service     (ClusterIP)
-├── Ingress
-│   └── ai-task-ingress  (Nginx, TLS via cert-manager)
-├── ConfigMap
-│   └── ai-task-config   (non-sensitive env)
-├── Secret
-│   └── ai-task-secrets  (MONGO_URI, JWT keys)
-└── PVC
-    └── redis-pvc        (5Gi)
+k8s/
+├── base/
+│   ├── namespace.yaml    — Namespace: ai-task-platform
+│   ├── backend.yaml      — Backend Deployment (2 replicas) + ClusterIP Service (:5000)
+│   ├── services.yaml     — Frontend Deployment (2 replicas) + ClusterIP Service (:80)
+│   │                       Redis Deployment (1 replica, PVC) + ClusterIP Service (:6379)
+│   ├── worker.yaml       — Worker Deployment (2–10 replicas, HPA) + Service
+│   ├── ingress.yaml      — Nginx Ingress with TLS via cert-manager
+│   ├── configmap.yaml    — ai-task-config (non-sensitive env vars)
+│   ├── secret.yaml       — ai-task-secrets (MONGO_URI, JWT keys)
+│   └── pvc.yaml          — redis-pvc (5Gi)
+└── overlays/
+    ├── dev/              — Dev environment patches
+    └── prod/             — Prod environment patches
+```
+
+### ArgoCD GitOps
+
+```
+argocd/
+└── application.yaml   — ArgoCD Application pointing to infra repo
+                         Auto-syncs k8s manifests on git push
 ```
 
 ### CI/CD Pipeline (GitHub Actions)
 
 ```
-Push to main
-     │
-     ▼
-┌────────────────────────────────────┐
-│ 1. Backend: Lint, TypeScript, Test │ ◄─ Parallel jobs
-│ 2. Frontend: Lint, Build           │
-│ 3. Worker: Flake8, Black           │
-└────────────┬───────────────────────┘
-             │ All pass
-             ▼
-┌───────────────────────────────────────────┐
-│ 4. Build & Push Docker Images to GHCR     │
-│    - ai-task-backend:sha + latest         │
-│    - ai-task-frontend:sha + latest        │
-│    - ai-task-worker:sha + latest          │
-└────────────────────────┬──────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────┐
-│ 5. Update Infrastructure Repo                        │
-│    - Patch k8s manifests with new image SHA tags     │
-│    - ArgoCD detects git change → auto-sync          │
-│    - Kubernetes rolling update                       │
-└─────────────────────────────────────────────────────┘
+Push to main / develop   (PRs to main also trigger lint jobs)
+      │
+      ▼
+┌───────────────────────────────────────────────────┐
+│ Job 1: Backend — Lint & Test                      │ ◄─ Parallel
+│   npm ci → lint → tsc build → npm test           │
+│ Job 2: Frontend — Lint & Build                    │
+│   npm ci → lint → npm run build                  │
+│ Job 3: Worker — Lint                              │
+│   pip install flake8 black                        │
+│   black --check → flake8 (max-line-length 120)   │
+└──────────────────┬────────────────────────────────┘
+                   │ All pass + push to main only
+                   ▼
+┌──────────────────────────────────────────────────────┐
+│ Job 4: Build & Push Docker Images → GHCR             │
+│   ghcr.io/<owner>/ai-task-backend:<sha>+latest       │
+│   ghcr.io/<owner>/ai-task-frontend:<sha>+latest      │
+│   ghcr.io/<owner>/ai-task-worker:<sha>+latest        │
+└────────────────────────────┬─────────────────────────┘
+                             │
+                             ▼
+┌──────────────────────────────────────────────────────────┐
+│ Job 5: Update Infrastructure Repo                         │
+│   Checkout: pratut04/ai-task-platform-infra               │
+│   sed patch k8s/base/*.yaml with new image SHA tags       │
+│   git commit & push → ArgoCD detects → rolling update    │
+└──────────────────────────────────────────────────────────┘
 ```
 
 ---
